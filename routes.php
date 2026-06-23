@@ -20,11 +20,14 @@ return function (Router $router, array $config): void {
 
     $router->get('/dashboard', fn ($req) => DashboardController::index($req));
     $router->get('/users', fn ($req) => UserController::index($req));
+    $router->post('/users', fn ($req) => UserController::store($req));
+    $router->put('/users/{id}', fn ($req, $params) => UserController::update($req, $params));
     $router->get('/customers', fn ($req) => CustomerController::index($req));
     $router->get('/orders', fn ($req) => OrderController::index($req));
     $router->get('/recipe-categories', fn ($req) => RecipeController::categories($req));
     $router->get('/recipes', fn ($req) => RecipeController::index($req));
     $router->get('/ingredients', fn ($req) => IngredientController::index($req));
+    $router->post('/ingredients/{id}/restock', fn ($req, $params) => IngredientController::restock($req, $params));
     $router->get('/production', fn ($req) => ProductionController::index($req));
     $router->get('/payments', fn ($req) => PaymentController::index($req));
     $router->get('/reports/{type}', fn ($req, $params) => ReportController::show($req, $params));

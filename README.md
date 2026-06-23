@@ -30,16 +30,28 @@ PHP REST API backend for **Sistem Informasi Manajemen Katering (SIMK)**.
 
    Base URL: `http://localhost:8080`
 
-## Apache (Production)
+## Deploy ke subdomain (mis. api.rzaproject.my.id)
 
-Point document root to `api/public` or place the `api` folder under your web root as `/api`.
+**Penting:** subdomain harus mengarah ke folder `api/public`, bukan root CasaOS atau layanan lain.
 
-Example virtual host:
-```
-DocumentRoot "C:/xampp/htdocs/simk-api/public"
-```
+1. Upload folder `api/` ke server.
+2. Set **document root** virtual host / reverse proxy ke `.../api/public`.
+3. Aktifkan `mod_rewrite` (Apache) atau atur Nginx:
+   ```nginx
+   root /path/to/api/public;
+   try_files $uri $uri/ /index.php?$query_string;
+   ```
+4. Jalankan `php setup.php` di server (atau import `schema.sql` + `seed.sql`).
+5. Uji dari browser/terminal:
+   ```bash
+   curl -X POST https://api.rzaproject.my.id/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"admin@simk.id","password":"admin123"}'
+   ```
+   Respons sukses harus berisi `{"data":{"token":...,"user":...}}`.
 
-API will be available at `http://localhost/api` when using the root `.htaccess` rewrite.
+Jika root domain menampilkan **CasaOS** atau login mengembalikan **405 Method Not Allowed**, API SIMK belum ter-deploy di URL tersebut.
+
 
 ## Demo Accounts
 

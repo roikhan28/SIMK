@@ -138,6 +138,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
     final addressController = TextEditingController(text: customer?.address ?? '');
     var saving = false;
 
+    final messenger = ScaffoldMessenger.of(context);
+    final dataService = context.read<AuthProvider>().dataService;
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -190,7 +193,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         final name = nameController.text.trim();
                         final phone = phoneController.text.trim();
                         if (name.isEmpty || phone.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(content: Text('Nama dan telepon wajib diisi')),
                           );
                           return;
@@ -198,16 +201,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
                         setDialogState(() => saving = true);
                         try {
-                          final service = context.read<AuthProvider>().dataService;
                           final saved = isEdit
-                              ? await service.updateCustomer(
-                                  customer!.id,
+                              ? await dataService.updateCustomer(
+                                  customer.id,
                                   name: name,
                                   phone: phone,
                                   email: emailController.text.trim(),
                                   address: addressController.text.trim(),
                                 )
-                              : await service.createCustomer(
+                              : await dataService.createCustomer(
                                   name: name,
                                   phone: phone,
                                   email: emailController.text.trim(),
@@ -225,21 +227,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             _filter();
                           });
                           if (ctx.mounted) Navigator.pop(ctx);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isEdit ? 'Pelanggan diperbarui' : 'Pelanggan ditambahkan'),
-                                backgroundColor: AppTheme.success,
-                              ),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(isEdit ? 'Pelanggan diperbarui' : 'Pelanggan ditambahkan'),
+                              backgroundColor: AppTheme.success,
+                            ),
+                          );
                         } catch (e) {
                           setDialogState(() => saving = false);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
                         }
                       },
                 child: saving

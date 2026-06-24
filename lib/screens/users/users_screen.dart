@@ -119,6 +119,8 @@ class _UsersScreenState extends State<UsersScreen> {
     var selectedRole = user?.role ?? UserRole.kasir;
     var isActive = user?.isActive ?? true;
     var saving = false;
+    final messenger = ScaffoldMessenger.of(context);
+    final dataService = context.read<AuthProvider>().dataService;
 
     showDialog(
       context: context,
@@ -154,7 +156,8 @@ class _UsersScreenState extends State<UsersScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<UserRole>(
-                    value: selectedRole,
+                    key: ValueKey(selectedRole),
+                    initialValue: selectedRole,
                     decoration: const InputDecoration(labelText: 'Role'),
                     items: UserRole.values
                         .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
@@ -187,13 +190,13 @@ class _UsersScreenState extends State<UsersScreen> {
                         final password = passwordController.text;
 
                         if (name.isEmpty || email.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(content: Text('Nama dan email wajib diisi')),
                           );
                           return;
                         }
                         if (!isEdit && password.length < 6) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(content: Text('Password minimal 6 karakter')),
                           );
                           return;
@@ -201,10 +204,9 @@ class _UsersScreenState extends State<UsersScreen> {
 
                         setDialogState(() => saving = true);
                         try {
-                          final dataService = context.read<AuthProvider>().dataService;
                           final saved = isEdit
                               ? await dataService.updateUser(
-                                  user!.id,
+                                  user.id,
                                   name: name,
                                   email: email,
                                   role: selectedRole,
@@ -228,21 +230,17 @@ class _UsersScreenState extends State<UsersScreen> {
                             }
                           });
                           if (ctx.mounted) Navigator.pop(ctx);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isEdit ? 'Pengguna diperbarui' : 'Pengguna ditambahkan'),
-                                backgroundColor: AppTheme.success,
-                              ),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(isEdit ? 'Pengguna diperbarui' : 'Pengguna ditambahkan'),
+                              backgroundColor: AppTheme.success,
+                            ),
+                          );
                         } catch (e) {
                           setDialogState(() => saving = false);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
                         }
                       },
                 child: saving

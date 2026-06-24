@@ -159,6 +159,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final quantityController = TextEditingController();
     final notesController = TextEditingController();
     var saving = false;
+    final messenger = ScaffoldMessenger.of(context);
+    final dataService = context.read<AuthProvider>().dataService;
 
     showDialog(
       context: context,
@@ -172,7 +174,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<Ingredient>(
-                    value: selected,
+                    key: ValueKey(selected?.id),
+                    initialValue: selected,
                     decoration: const InputDecoration(labelText: 'Pilih Bahan'),
                     items: _ingredients
                         .map((i) => DropdownMenuItem(
@@ -214,7 +217,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     : () async {
                         final quantity = double.tryParse(quantityController.text.replaceAll(',', '.'));
                         if (quantity == null || quantity <= 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(content: Text('Masukkan jumlah restock yang valid')),
                           );
                           return;
@@ -222,7 +225,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
                         setDialogState(() => saving = true);
                         try {
-                          final updated = await context.read<AuthProvider>().dataService.restockIngredient(
+                          final updated = await dataService.restockIngredient(
                                 selected!.id,
                                 quantity,
                                 notes: notesController.text.trim(),
@@ -233,21 +236,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             if (index >= 0) _ingredients[index] = updated;
                           });
                           if (ctx.mounted) Navigator.pop(ctx);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Stok ${updated.name} diperbarui ke ${updated.stock} ${updated.unit}'),
-                                backgroundColor: AppTheme.success,
-                              ),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Stok ${updated.name} diperbarui ke ${updated.stock} ${updated.unit}'),
+                              backgroundColor: AppTheme.success,
+                            ),
+                          );
                         } catch (e) {
                           setDialogState(() => saving = false);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
                         }
                       },
                 child: saving

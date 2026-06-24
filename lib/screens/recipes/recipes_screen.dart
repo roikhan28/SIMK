@@ -55,10 +55,10 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
 
     if (isEdit) {
       try {
-        detail = await service.getRecipeDetail(recipe!.id);
+        detail = await service.getRecipeDetail(recipe.id);
       } catch (_) {
         detail = RecipeDetail(
-          id: recipe!.id,
+          id: recipe.id,
           name: recipe.name,
           categoryId: recipe.categoryId,
           categoryName: recipe.categoryName,
@@ -69,7 +69,7 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
       }
     }
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     final nameController = TextEditingController(text: detail?.name ?? recipe?.name ?? '');
     final priceController = TextEditingController(
@@ -102,6 +102,8 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
       ingredientRows.add(_IngredientRow());
     }
 
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
     var saving = false;
 
     await showDialog(
@@ -123,7 +125,8 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<RecipeCategory>(
-                      value: selectedCategory,
+                      key: ValueKey(selectedCategory.id),
+                      initialValue: selectedCategory,
                       decoration: const InputDecoration(labelText: 'Kategori'),
                       items: _categories
                           .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
@@ -164,7 +167,8 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
                               Expanded(
                                 flex: 3,
                                 child: DropdownButtonFormField<Ingredient>(
-                                  value: row.ingredient,
+                                  key: ValueKey(row.ingredient?.id ?? row.hashCode),
+                                  initialValue: row.ingredient,
                                   decoration: const InputDecoration(labelText: 'Bahan'),
                                   items: ingredients
                                       .map((i) => DropdownMenuItem(value: i, child: Text(i.name)))
@@ -221,7 +225,7 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
                         final servings = int.tryParse(servingsController.text);
 
                         if (name.isEmpty || price == null || price < 0 || servings == null || servings < 1) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(content: Text('Lengkapi nama, harga, dan porsi dengan benar')),
                           );
                           return;
@@ -248,7 +252,7 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
                         try {
                           final saved = isEdit
                               ? await service.updateRecipe(
-                                  recipe!.id,
+                                  recipe.id,
                                   name: name,
                                   categoryId: selectedCategory.id,
                                   price: price,
@@ -277,21 +281,17 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
                             }
                           });
                           if (ctx.mounted) Navigator.pop(ctx);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isEdit ? 'Resep diperbarui' : 'Resep ditambahkan'),
-                                backgroundColor: AppTheme.success,
-                              ),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(isEdit ? 'Resep diperbarui' : 'Resep ditambahkan'),
+                              backgroundColor: AppTheme.success,
+                            ),
+                          );
                         } catch (e) {
                           setDialogState(() => saving = false);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
                         }
                       },
                 child: saving
@@ -318,6 +318,8 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
     final nameController = TextEditingController(text: category?.name ?? '');
     final descriptionController = TextEditingController(text: category?.description ?? '');
     var saving = false;
+    final messenger = ScaffoldMessenger.of(context);
+    final dataService = context.read<AuthProvider>().dataService;
 
     await showDialog(
       context: context,
@@ -356,7 +358,7 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
                     : () async {
                         final name = nameController.text.trim();
                         if (name.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(content: Text('Nama kategori wajib diisi')),
                           );
                           return;
@@ -364,14 +366,13 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
 
                         setDialogState(() => saving = true);
                         try {
-                          final service = context.read<AuthProvider>().dataService;
                           final saved = isEdit
-                              ? await service.updateRecipeCategory(
-                                  category!.id,
+                              ? await dataService.updateRecipeCategory(
+                                  category.id,
                                   name: name,
                                   description: descriptionController.text.trim(),
                                 )
-                              : await service.createRecipeCategory(
+                              : await dataService.createRecipeCategory(
                                   name: name,
                                   description: descriptionController.text.trim(),
                                 );
@@ -386,21 +387,17 @@ class _RecipesScreenState extends State<RecipesScreen> with SingleTickerProvider
                             }
                           });
                           if (ctx.mounted) Navigator.pop(ctx);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isEdit ? 'Kategori diperbarui' : 'Kategori ditambahkan'),
-                                backgroundColor: AppTheme.success,
-                              ),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(isEdit ? 'Kategori diperbarui' : 'Kategori ditambahkan'),
+                              backgroundColor: AppTheme.success,
+                            ),
+                          );
                         } catch (e) {
                           setDialogState(() => saving = false);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
                         }
                       },
                 child: saving

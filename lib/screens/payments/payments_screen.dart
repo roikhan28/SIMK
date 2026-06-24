@@ -116,6 +116,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> with SingleTickerProvid
     Order? selectedOrder = order;
     final methodController = TextEditingController(text: 'Transfer Bank');
     var saving = false;
+    final messenger = ScaffoldMessenger.of(context);
+    final dataService = context.read<AuthProvider>().dataService;
 
     await showDialog(
       context: context,
@@ -130,7 +132,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> with SingleTickerProvid
                 children: [
                   if (order == null)
                     DropdownButtonFormField<Order>(
-                      value: selectedOrder,
+                      key: ValueKey(selectedOrder?.id),
+                      initialValue: selectedOrder,
                       decoration: const InputDecoration(labelText: 'Pilih Pesanan'),
                       items: _pendingOrders
                           .map((o) => DropdownMenuItem(
@@ -164,7 +167,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> with SingleTickerProvid
                     : () async {
                         setDialogState(() => saving = true);
                         try {
-                          final payment = await context.read<AuthProvider>().dataService.createPayment(
+                          final payment = await dataService.createPayment(
                                 orderId: selectedOrder!.id,
                                 method: methodController.text.trim(),
                               );
@@ -174,14 +177,13 @@ class _PaymentsScreenState extends State<PaymentsScreen> with SingleTickerProvid
                             _pendingOrders.removeWhere((o) => o.id == selectedOrder!.id);
                           });
                           if (ctx.mounted) Navigator.pop(ctx);
+                          if (!context.mounted) return;
                           _showInvoice(context, order: selectedOrder, payment: payment);
                         } catch (e) {
                           setDialogState(() => saving = false);
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
                         }
                       },
                 child: saving
@@ -260,7 +262,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> with SingleTickerProvid
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: buffer.toString()));
               if (ctx.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(ctx).showSnackBar(
                   const SnackBar(content: Text('Invoice disalin ke clipboard')),
                 );
               }

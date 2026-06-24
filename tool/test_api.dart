@@ -1,6 +1,7 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
 import 'package:simk/services/simk_http_client_io.dart';
 
 Future<void> main() async {

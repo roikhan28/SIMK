@@ -38,8 +38,8 @@ class _OrderFormScreenState extends State<OrderFormScreen> {
 
   Future<void> _load() async {
     final service = context.read<AuthProvider>().dataService;
-    final customers = await service.getCustomers();
-    final recipes = await service.getRecipes();
+    final customers = await service.getCustomers(force: true);
+    final recipes = await service.getRecipes(force: true);
     if (mounted) {
       setState(() {
         _customers = customers;
